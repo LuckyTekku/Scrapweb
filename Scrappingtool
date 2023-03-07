@@ -1,0 +1,50 @@
+import requests
+from bs4 import BeautifulSoup
+import time
+
+# Starting URL
+url = "https://casas.trovit.com.mx/index.php/cod.search_homes/type.1/what_d.aguascalientes/sug.0/isUserSearch.1/origin.2/order_by.relevance/price_max.1500000/geo_id.N4392412822/"
+
+# Open the file to save the data
+with open("properties.txt", "w") as file:
+    # Iterate through all pages
+    while True:
+        # Make a request to the website
+        response = requests.get(url)
+
+        # Create a BeautifulSoup object to parse the HTML
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Find all the property elements on the page
+        properties = soup.find_all("div", class_="snippet-wrapper js-item-wrapper")
+
+        for property in properties:
+            # Find the property title
+            title = property.find("div", class_="item-title").text
+
+            # Find the property price
+            price = property.find("span", class_="actual-price").text
+
+            # Find the property address
+            address = property.find("span", class_="address").text
+            
+            # Find the property description
+            description = property.find("div", class_="item-description").text
+
+            # Write the data to the file, separated by commas
+            file.write(f"{title},{price},{address},{description}\n")
+        
+        # Find the next page button
+        next_page_element = soup.find("a", class_="trovit-button no-background number")
+        
+        # If there's no next page button, we've reached the last page
+        if not next_page_element:
+            break
+        
+        # Update the URL for the next iteration
+        url = next_page_element["href"]
+        
+        # delay for 2 secs
+        time.sleep(2)
+        
+    print("Data saved to properties.txt")
